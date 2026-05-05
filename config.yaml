@@ -1,0 +1,16 @@
+models:
+  default: "gemini-2.5-flash"
+  critic: "llama-4-scout"
+  ad_hoc_overrides: {}
+
+runtime:
+  mock_llm: false
+  allow_commit: false
+  allow_push: false
+  max_retries: 3
+  ad_hoc_budget: 1
+  test_timeout_seconds: 120
+  test_command_allowlist: ["python -m unittest", "pytest", "python -m pytest"]
+  github_enabled: true
+  allow_pr_draft: false
+  branch_prefix: "maestro/issue"
