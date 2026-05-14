@@ -13,17 +13,53 @@ class TesterAgent(BaseAgent):
         self.test_runner = test_runner
 
     def run(self, context: dict[str, object]) -> AgentResult:
-        command = str(context.get("test_command", "python -m unittest discover"))
-        result = self.test_runner.run(command)
-        summary = "Tests passed." if result["passed"] else "Tests failed."
+        requested = context.get("test_commands")
+        if isinstance(requested, list) and requested:
+            commands = [str(c) for c in requested]
+        elif context.get("test_command"):
+            commands = [str(context["test_command"])]
+        else:
+            scoped = self.test_runner.issue_scoped_commands(context)
+            discovered = self.test_runner.discover_commands()
+            commands = scoped + [c for c in discovered if c not in scoped]
+
+        attempts: list[dict[str, object]] = []
+        chosen_result: dict[str, object] | None = None
+        chosen_command = ""
+        for command in commands:
+            result = self.test_runner.run(command)
+            no_tests = self.test_runner.looks_like_no_tests(result)
+            infra_error = self.test_runner.looks_like_infra_error(result)
+            attempts.append(
+                {
+                    "command": command,
+                    "passed": result["passed"],
+                    "exit_code": result["exit_code"],
+                    "no_tests_ran": no_tests,
+                    "infra_error": infra_error,
+                }
+            )
+            chosen_result = result
+            chosen_command = command
+            if result["passed"]:
+                break
+            if not no_tests and not infra_error:
+                break
+
+        if chosen_result is None:
+            chosen_result = {"passed": False, "exit_code": 127, "stdout": "", "stderr": "No test command discovered."}
+            chosen_command = "N/A"
+
+        summary = "Tests passed." if chosen_result["passed"] else "Tests failed."
         return AgentResult(
             summary=summary,
             payload={
-                "command": command,
-                "passed": result["passed"],
-                "exit_code": result["exit_code"],
-                "stdout": result["stdout"],
-                "stderr": result["stderr"],
+                "command": chosen_command,
+                "passed": chosen_result["passed"],
+                "exit_code": chosen_result["exit_code"],
+                "stdout": chosen_result["stdout"],
+                "stderr": chosen_result["stderr"],
+                "attempts": attempts,
             },
-            confidence=0.85 if result["passed"] else 0.55,
+            confidence=0.85 if chosen_result["passed"] else 0.55,
         )

@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
+import urllib.error
+import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -22,6 +25,15 @@ class GitHubProvider:
 
     def fetch_issue(self, repo: str, issue_ref: str) -> GitHubIssue:
         if not self.enabled:
+            compact = issue_ref.strip()
+            if compact.isdigit() and len(compact) <= 3:
+                return GitHubIssue(
+                    repo=repo,
+                    number=compact,
+                    title="",
+                    body=compact,
+                    url=f"https://github.com/{repo}/issues/{compact}",
+                )
             return GitHubIssue(
                 repo=repo,
                 number=str(issue_ref),
@@ -30,50 +42,29 @@ class GitHubProvider:
                 url=f"https://github.com/{repo}/issues/{issue_ref}",
             )
         issue_number = self._extract_issue_number(issue_ref)
-        if not self.is_gh_available():
+        token = os.getenv("GITHUB_TOKEN", "").strip()
+        if not token:
             return GitHubIssue(
                 repo=repo,
                 number=issue_number,
                 title=f"Issue {issue_ref}",
-                body="Fallback issue body: `gh` CLI is not installed.",
+                body="Fallback issue body: `GITHUB_TOKEN` is missing.",
                 url=f"https://github.com/{repo}/issues/{issue_number}",
             )
-        cmd = [
-            "gh",
-            "issue",
-            "view",
-            issue_number,
-            "--repo",
-            repo,
-            "--json",
-            "number,title,body,url",
-        ]
         try:
-            completed = subprocess.run(
-                cmd,
-                cwd=str(self.repo_path),
-                capture_output=True,
-                text=True,
-                shell=False,
-                check=False,
+            payload = self._request_json(
+                method="GET",
+                url=f"https://api.github.com/repos/{repo}/issues/{issue_number}",
+                token=token,
             )
-        except FileNotFoundError:
+        except RuntimeError as exc:
             return GitHubIssue(
                 repo=repo,
                 number=issue_number,
                 title=f"Issue {issue_ref}",
-                body="Fallback issue body: `gh` CLI is not installed.",
+                body=f"Fallback issue body: {exc}",
                 url=f"https://github.com/{repo}/issues/{issue_number}",
             )
-        if completed.returncode != 0:
-            return GitHubIssue(
-                repo=repo,
-                number=issue_number,
-                title=f"Issue {issue_ref}",
-                body=f"Fallback issue body: {completed.stderr.strip()}",
-                url=f"https://github.com/{repo}/issues/{issue_number}",
-            )
-        payload = json.loads(completed.stdout or "{}")
         return GitHubIssue(
             repo=repo,
             number=str(payload.get("number", issue_number)),
@@ -83,36 +74,25 @@ class GitHubProvider:
         )
 
     def create_draft_pr(self, repo: str, title: str, body: str, branch: str) -> str:
-        if not self.is_gh_available():
-            return "PR draft creation skipped: `gh` CLI is not installed."
-        cmd = [
-            "gh",
-            "pr",
-            "create",
-            "--repo",
-            repo,
-            "--draft",
-            "--title",
-            title,
-            "--body",
-            body,
-            "--head",
-            branch,
-        ]
+        token = os.getenv("GITHUB_TOKEN", "").strip()
+        if not token:
+            return "PR draft creation skipped: `GITHUB_TOKEN` missing."
         try:
-            completed = subprocess.run(
-                cmd,
-                cwd=str(self.repo_path),
-                capture_output=True,
-                text=True,
-                shell=False,
-                check=False,
+            payload = self._request_json(
+                method="POST",
+                url=f"https://api.github.com/repos/{repo}/pulls",
+                token=token,
+                data={
+                    "title": title,
+                    "body": body,
+                    "head": branch,
+                    "base": "main",
+                    "draft": True,
+                },
             )
-        except FileNotFoundError:
-            return "PR draft creation skipped: `gh` CLI is not installed."
-        if completed.returncode != 0:
-            return f"PR draft creation skipped/failed: {completed.stderr.strip()}"
-        return completed.stdout.strip()
+        except RuntimeError as exc:
+            return f"PR draft creation skipped/failed: {exc}"
+        return str(payload.get("html_url", "PR draft created."))
 
     def is_gh_available(self) -> bool:
         try:
@@ -127,6 +107,34 @@ class GitHubProvider:
             return completed.returncode == 0
         except FileNotFoundError:
             return False
+
+    def _request_json(
+        self,
+        *,
+        method: str,
+        url: str,
+        token: str,
+        data: dict[str, object] | None = None,
+    ) -> dict[str, object]:
+        payload = json.dumps(data).encode("utf-8") if data is not None else None
+        req = urllib.request.Request(
+            url=url,
+            data=payload,
+            method=method,
+            headers={
+                "Accept": "application/vnd.github+json",
+                "Authorization": f"Bearer {token}",
+                "X-GitHub-Api-Version": "2022-11-28",
+                "Content-Type": "application/json",
+            },
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=30) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            raise RuntimeError(f"HTTP {exc.code}") from exc
+        except urllib.error.URLError as exc:
+            raise RuntimeError(f"Network error: {exc.reason}") from exc
 
     @staticmethod
     def _extract_issue_number(issue_ref: str) -> str:

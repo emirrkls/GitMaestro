@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import os
+import sys
 import time
 from typing import Callable
 
+from maestro.config.settings import RuntimeConfig
 from maestro.providers.llm.base import LLMProvider
 from maestro.providers.llm.gemini import GeminiProvider
 from maestro.providers.llm.mock import MockLLMProvider
+from maestro.providers.llm.ollama_provider import OllamaProvider
 from maestro.providers.llm.openrouter import OpenRouterProvider
 
 
@@ -81,12 +84,26 @@ class RoutedLLMProvider(LLMProvider):
         raise RuntimeError(f"LLM request failed after retries for model={model}")
 
 
-def build_llm_provider(mock_llm: bool) -> LLMProvider:
-    if mock_llm:
+def build_llm_provider(runtime: RuntimeConfig) -> LLMProvider:
+    if runtime.mock_llm:
         return MockLLMProvider()
+    if runtime.llm_backend == "ollama":
+        print("[maestro] Using Ollama backend (local, no Gemini/OpenRouter quota).", file=sys.stderr)
+        return OllamaProvider(
+            base_url=runtime.ollama_base_url,
+            timeout_seconds=runtime.ollama_timeout_seconds,
+            max_tokens=runtime.ollama_max_tokens,
+            think=runtime.ollama_think,
+        )
+
     google_key = os.getenv("GOOGLE_API_KEY", "").strip()
     openrouter_key = os.getenv("OPENROUTER_API_KEY", "").strip()
     if not google_key or not openrouter_key:
+        print(
+            "[maestro] WARNING: GOOGLE_API_KEY and OPENROUTER_API_KEY must both be set for cloud backend; "
+            "falling back to MockLLMProvider (no real patch). Use runtime.llm_backend: ollama for free local runs.",
+            file=sys.stderr,
+        )
         return MockLLMProvider()
     return RoutedLLMProvider(
         gemini=GeminiProvider(api_key=google_key),

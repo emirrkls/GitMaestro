@@ -1,4 +1,58 @@
+# Secrets and local env (never commit real values)
 .env
-__pycache__/
-*.pyc
+.env.local
+.env.*.local
+
+# Run outputs (clones, logs, diffs — large, reproducible, may contain paths/URLs)
 runs/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Testing / coverage / typecheck caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+
+# Optional: uncomment if you keep machine-specific VS Code settings out of the repo
+# .vscode/

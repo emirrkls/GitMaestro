@@ -34,7 +34,15 @@ class OpenRouterProvider(LLMProvider):
             with urllib.request.urlopen(request, timeout=self.timeout_seconds) as response:
                 raw = response.read().decode("utf-8")
         except urllib.error.HTTPError as exc:
-            raise RuntimeError(f"OpenRouter HTTP error: {exc.code}") from exc
+            detail = ""
+            try:
+                body = exc.read().decode("utf-8", errors="replace")
+                detail = body[:1200]
+            except OSError:
+                detail = "(no response body)"
+            raise RuntimeError(
+                f"OpenRouter HTTP error: {exc.code} body={detail}"
+            ) from exc
         except urllib.error.URLError as exc:
             raise RuntimeError(f"OpenRouter network error: {exc.reason}") from exc
         payload_out = json.loads(raw or "{}")

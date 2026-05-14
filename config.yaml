@@ -1,3 +1,9 @@
+# Cloud (default): needs GOOGLE_API_KEY + OPENROUTER_API_KEY — Gemini free tier is very low RPD.
+# Free local: use Ollama instead:
+#   models.default / models.critic → same Ollama model tag, e.g. "qwen2.5-coder:7b"
+#   runtime.llm_backend: ollama
+#   runtime.ollama_base_url: "http://127.0.0.1:11434/v1"
+# Then: ollama serve && ollama pull qwen2.5-coder:7b
 models:
   default: "gemini-2.5-flash"
   critic: "llama-4-scout"
@@ -7,10 +13,22 @@ runtime:
   mock_llm: false
   allow_commit: false
   allow_push: false
-  max_retries: 3
+  max_retries: 10
   ad_hoc_budget: 1
   test_timeout_seconds: 120
   test_command_allowlist: ["python -m unittest", "pytest", "python -m pytest"]
   github_enabled: true
   allow_pr_draft: false
   branch_prefix: "maestro/issue"
+  llm_backend: "cloud"
+  ollama_base_url: "http://127.0.0.1:11434/v1"
+  ollama_max_tokens: 8192
+  ollama_think: false
+  ollama_timeout_seconds: 600
+  test_baseline_before_patch: true
+  test_repair_max_retries: 2
+  patch_strategy_snippet_enabled: true
+  patch_strategy_hunk_enabled: true
+  patch_strategy_rewrite_enabled: false
+  patch_strategy_max_diff_lines: 600
+  patch_strategy_max_diff_bytes: 100000

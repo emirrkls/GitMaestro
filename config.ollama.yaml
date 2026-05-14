@@ -1,0 +1,49 @@
+# GitMaestro + yerel Ollama — RTX 3060 12GB VRAM / 16GB sistem RAM örneği
+# Kullanım: python -m maestro run --repo owner/name --issue 1 --config config.ollama.yaml
+#
+# Donanım notları:
+# - 12GB kartta tam yükleme: genelde qwen3.5:latest (~6GB sınıfı) veya qwen2.5-coder:14b (Q4 ~9GB) rahat;
+#   30B+ modeller kısmi VRAM + offload ile çalışır; toplam 16GB RAM ile agresif offload çok swapping yapar.
+# - Layer offload için Ollama sürümünüzün davranışına bakın; gerekiyorsa Modelfile ile num_gpu ayarı (gelişmiş).
+# - GitMaestro Ollama /v1/chat/completions çağrısında `ollama_think` ayarını gönderir.
+#   (think açıkken ilk token süresi belirgin artabilir).
+#
+# Hız + kalite dağılımı (RTX 3060 12GB / 16GB RAM):
+# - default (Maestro / Analyst / Scout / Tester / Scribe) -> qwen2.5-coder:7b
+# - Critic / Surgeon / PatchPlanner -> qwen2.5-coder:14b
+#
+# İndirme (bu profile göre hafif; PowerShell'de ollama PATH'te olmasa da genelde bulunur):
+#   .\scripts\ollama_pull_hardware_rtx3060_12gb.ps1
+#
+# İsteğe bağlı ek pull scriptleri:
+#   .\scripts\ollama_pull_qwen.ps1
+#   .\scripts\ollama_pull_qwen_nextgen.ps1   # büyük etiketleri script içinden silerek kullan
+models:
+  # Maestro, Analyst, Scout, Tester, Scribe (override yoksa)
+  default: "qwen2.5-coder:7b"
+  critic: "qwen2.5-coder:14b"
+  ad_hoc_overrides:
+    Surgeon: "qwen2.5-coder:14b"
+    PatchPlanner: "qwen2.5-coder:14b"
+
+runtime:
+  mock_llm: false
+  allow_commit: true
+  allow_push: true
+  max_retries: 10
+  ad_hoc_budget: 1
+  test_timeout_seconds: 240
+  test_command_allowlist: ["python -m unittest", "pytest", "python -m pytest"]
+  github_enabled: true
+  allow_pr_draft: true
+  branch_prefix: "maestro/issue"
+  llm_backend: "ollama"
+  ollama_base_url: "http://127.0.0.1:11434/v1"
+  # İlk yükleme + think üretimi yavaş olabilir (dakikalar); gerekirse 900–1200 yap
+  ollama_timeout_seconds: 720
+  # Ollama /v1/chat/completions: thinking-capable modellerde ek akıl yürütme (destek yoksa yok sayılır)
+  ollama_think: false
+  # Uzun JSON / patch yanıtları için (OpenAI: max_tokens)
+  ollama_max_tokens: 8192
+  test_baseline_before_patch: true
+  test_repair_max_retries: 2
