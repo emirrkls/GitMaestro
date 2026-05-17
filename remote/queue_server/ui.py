@@ -458,7 +458,7 @@ def render_job_detail(
       <h2>İş özeti</h2>
       <dl class="meta-row">
         <div><dt>Job ID</dt><dd><code>{_esc(job_id)}</code></dd></div>
-        <div><dt>Durum</dt><dd{_pulse}>{_status_badge(status)}</dd></div>
+        <div><dt>Durum</dt><dd{pulse}>{_status_badge(status)}</dd></div>
         <div><dt>Repo</dt><dd>{_esc(repo)}</dd></div>
         <div><dt>Issue</dt><dd>{_esc(issue_ref)}</dd></div>
         <div><dt>task_id</dt><dd><code>{_esc(task_id or "—")}</code></dd></div>

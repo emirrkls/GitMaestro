@@ -152,17 +152,24 @@ def job_detail_html(
     job = store.get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="job not found")
-    events_html = render_events_timeline(job.events_jsonl)
-    page = render_job_detail(
-        job_id=job.id,
-        status=job.status,
-        repo=job.repo,
-        issue_ref=job.issue_ref,
-        task_id=job.task_id,
-        error=job.error,
-        stdout_text=job.stdout_text,
-        events_html=events_html,
-    )
+    try:
+        events_html = render_events_timeline(job.events_jsonl)
+        page = render_job_detail(
+            job_id=job.id,
+            status=job.status,
+            repo=job.repo,
+            issue_ref=job.issue_ref,
+            task_id=job.task_id,
+            error=job.error,
+            stdout_text=job.stdout_text,
+            events_html=events_html,
+        )
+    except Exception as exc:
+        logger.exception("job_detail render failed job_id=%s", job_id)
+        page = (
+            f"<html><body><p>Job {_esc(job.id)} — render hatası: {_esc(str(exc))}</p>"
+            f'<p><a href="/">Ana sayfa</a></p></body></html>'
+        )
     return HTMLResponse(page)
 
 
