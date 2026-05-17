@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import html
 import logging
 import os
 import re
@@ -12,6 +11,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel, Field
 
 from db import JobStore, default_db_path
+from ui import _esc, _status_badge, render_events_timeline, render_index, render_job_detail
 
 _REPO_RE = re.compile(r"^[\w.-]+/[\w.-]+$")
 
@@ -87,58 +87,16 @@ def index(
     jobs = store.list_jobs(30)
     rows = []
     for j in jobs:
-        st = html.escape(j.status)
-        rid = html.escape(j.id[:8])
-        repo = html.escape(j.repo)
-        iss = html.escape(j.issue_ref[:80])
-        link = f'<a href="/jobs/{html.escape(j.id)}">detay</a>'
-        rows.append(f"<tr><td>{rid}</td><td>{st}</td><td>{repo}</td><td>{iss}</td><td>{link}</td></tr>")
-    table = "\n".join(rows) if rows else "<tr><td colspan=5>Henüz iş yok</td></tr>"
-    body = f"""<!DOCTYPE html>
-<html lang="tr"><head><meta charset="utf-8"/><title>GitMaestro queue</title>
-<style>body{{font-family:system-ui,sans-serif;max-width:960px;margin:2rem auto;}}
-table{{border-collapse:collapse;width:100%;}}td,th{{border:1px solid #ccc;padding:6px;text-align:left;}}
-code{{background:#f4f4f4;padding:2px 4px;}}</style></head><body>
-<h1>GitMaestro — uzaktan kuyruk</h1>
-<p>Yeni çalıştırma (evdeki worker işi alır):</p>
-<p id="form-error" style="color:#b00020;display:none;"></p>
-<form id="enqueue-form">
-  <label>repo <code>owner/name</code><br/><input name="repo" id="repo" size="40" required placeholder="emirrkls/GitMaestroRemoteTest"/></label><br/><br/>
-  <label>issue (numara veya URL)<br/><input name="issue" id="issue" size="60" required placeholder="1"/></label><br/><br/>
-  <button type="submit">Kuyruğa ekle</button>
-</form>
-<script>
-document.getElementById("enqueue-form").addEventListener("submit", async (e) => {{
-  e.preventDefault();
-  const err = document.getElementById("form-error");
-  err.style.display = "none";
-  const repo = document.getElementById("repo").value.trim();
-  const issue = document.getElementById("issue").value.trim();
-  try {{
-    const res = await fetch("/api/jobs", {{
-      method: "POST",
-      credentials: "same-origin",
-      headers: {{ "Content-Type": "application/json" }},
-      body: JSON.stringify({{ repo, issue }}),
-    }});
-    const data = await res.json().catch(() => ({{}}));
-    if (!res.ok) {{
-      err.textContent = data.detail || ("HTTP " + res.status);
-      err.style.display = "block";
-      return;
-    }}
-    window.location.href = "/jobs/" + data.job_id;
-  }} catch (ex) {{
-    err.textContent = String(ex);
-    err.style.display = "block";
-  }}
-}});
-</script>
-<h2>Son işler</h2>
-<table><thead><tr><th>id</th><th>durum</th><th>repo</th><th>issue</th><th></th></tr></thead>
-<tbody>{table}</tbody></table>
-</body></html>"""
-    return HTMLResponse(body)
+        rid = _esc(j.id[:8])
+        repo = _esc(j.repo)
+        iss = _esc(j.issue_ref[:80])
+        link = f'<a href="/jobs/{_esc(j.id)}">Detay →</a>'
+        rows.append(
+            f"<tr><td><code>{rid}</code></td><td>{_status_badge(j.status)}</td>"
+            f"<td>{repo}</td><td>{iss}</td><td>{link}</td></tr>"
+        )
+    table = "\n".join(rows) if rows else '<tr><td colspan="5" class="empty">Henüz iş yok</td></tr>'
+    return HTMLResponse(render_index(table))
 
 
 @app.post("/jobs", response_model=None)
@@ -194,27 +152,18 @@ def job_detail_html(
     job = store.get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="job not found")
-    ev = job.events_jsonl or ""
-    ev_preview = html.escape(ev[:120_000]) if ev else "(henüz yok veya worker yüklemedi)"
-    out = html.escape((job.stdout_text or "")[:50_000])
-    err = html.escape(job.error or "")
-    body = f"""<!DOCTYPE html>
-<html lang="tr"><head><meta charset="utf-8"/><title>Job {html.escape(job.id[:8])}</title>
-<style>body{{font-family:monospace;max-width:1100px;margin:1rem auto;white-space:pre-wrap;}}
-nav a{{font-family:system-ui;}}</style></head><body>
-<nav><a href="/">← Ana sayfa</a></nav>
-<h1>Job <code>{html.escape(job.id)}</code></h1>
-<p>durum: <strong>{html.escape(job.status)}</strong> repo={html.escape(job.repo)} issue={html.escape(job.issue_ref)}</p>
-<p>task_id: {html.escape(job.task_id or "")}</p>
-<h2>events.jsonl (kısaltılmış)</h2>
-{ev_preview}
-<h2>stdout (kısaltılmış)</h2>
-{out}
-<h2>error</h2>
-{err}
-<script>setTimeout(() => location.reload(), 8000);</script>
-</body></html>"""
-    return HTMLResponse(body)
+    events_html = render_events_timeline(job.events_jsonl)
+    page = render_job_detail(
+        job_id=job.id,
+        status=job.status,
+        repo=job.repo,
+        issue_ref=job.issue_ref,
+        task_id=job.task_id,
+        error=job.error,
+        stdout_text=job.stdout_text,
+        events_html=events_html,
+    )
+    return HTMLResponse(page)
 
 
 @app.get("/api/jobs/{job_id}")
