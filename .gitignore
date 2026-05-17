@@ -1,10 +1,13 @@
-# Secrets and local env (never commit real values)
+# Secrets and local env
 .env
 .env.local
 .env.*.local
 
 # Run outputs (clones, logs, diffs — large, reproducible, may contain paths/URLs)
 runs/
+
+# Local SQLite for remote queue server (may contain issue text)
+remote/queue_server/queue.db
 
 # Python
 __pycache__/

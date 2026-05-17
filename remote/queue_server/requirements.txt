@@ -1,0 +1,4 @@
+# Sadece bulut kuyruk API (Render). Maestro / Ollama burada çalışmaz.
+fastapi>=0.115
+uvicorn[standard]>=0.32
+httpx>=0.27

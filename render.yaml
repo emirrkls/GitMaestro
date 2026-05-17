@@ -1,0 +1,18 @@
+# Render Blueprint: https://render.com/docs/infrastructure-as-code
+# Dashboard: New > Blueprint > bu repoyu seç; gizli env'ler için sihirbazda değer gir.
+services:
+  - type: web
+    name: gitmaestro-remote-queue
+    runtime: python
+    region: frankfurt
+    plan: free
+    buildCommand: pip install -r remote/queue_server/requirements.txt
+    startCommand: cd remote/queue_server && uvicorn app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: REMOTE_UI_USERNAME
+        sync: false
+      - key: REMOTE_UI_PASSWORD
+        sync: false
+      - key: WORKER_TOKEN
+        sync: false
