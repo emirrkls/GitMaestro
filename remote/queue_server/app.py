@@ -6,7 +6,7 @@ import re
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Request, status
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel, Field
 
@@ -110,11 +110,11 @@ code{{background:#f4f4f4;padding:2px 4px;}}</style></head><body>
     return HTMLResponse(body)
 
 
-@app.post("/jobs")
+@app.post("/jobs", response_model=None)
 async def create_job_form(
     request: Request,
     creds: Annotated[HTTPBasicCredentials | None, Depends(security)],
-) -> RedirectResponse | JSONResponse:
+) -> Response:
     _verify_ui(creds)
     form = await request.form()
     repo = str(form.get("repo", "")).strip()
