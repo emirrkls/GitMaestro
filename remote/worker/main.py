@@ -13,6 +13,28 @@ import httpx
 _REPO_RE = re.compile(r"^[\w.-]+/[\w.-]+$")
 
 
+def _repo_root() -> Path:
+    raw = os.environ.get("MAESTRO_REPO_ROOT", "").strip()
+    if raw:
+        return Path(raw).resolve()
+    return Path(__file__).resolve().parents[2]
+
+
+def _load_dotenv() -> None:
+    """Repo kökündeki .env (gitignore) — maestro CLI ile aynı KEY=VALUE formatı."""
+    path = _repo_root() / ".env"
+    if not path.is_file():
+        return
+    for line in path.read_text(encoding="utf-8").splitlines():
+        striped = line.strip()
+        if not striped or striped.startswith("#") or "=" not in striped:
+            continue
+        key, value = striped.split("=", 1)
+        key = key.strip()
+        if key and key not in os.environ:
+            os.environ[key] = value.strip()
+
+
 def _env(name: str, default: str = "") -> str:
     v = os.environ.get(name, default)
     return v.strip() if isinstance(v, str) else default
@@ -66,7 +88,7 @@ def finish(
 
 
 def run_maestro(repo: str, issue_ref: str) -> tuple[int, str, str]:
-    repo_root = Path(_env("MAESTRO_REPO_ROOT")).resolve()
+    repo_root = _repo_root()
     if not repo_root.is_dir():
         raise SystemExit(f"MAESTRO_REPO_ROOT is not a directory: {repo_root}")
     py = _env("MAESTRO_PYTHON", sys.executable)
@@ -83,6 +105,7 @@ def run_maestro(repo: str, issue_ref: str) -> tuple[int, str, str]:
 
 
 def loop() -> None:
+    _load_dotenv()
     base = _env("QUEUE_BASE_URL")
     token = _env("WORKER_TOKEN")
     if not base or not token:
