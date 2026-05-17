@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import html
+import logging
 import os
 import re
 from typing import Annotated
@@ -50,6 +51,9 @@ def _verify_worker_token(request: Request) -> None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid worker token")
 
 
+logger = logging.getLogger("gitmaestro.queue")
+logging.basicConfig(level=logging.INFO)
+
 store = JobStore(default_db_path())
 app = FastAPI(title="GitMaestro remote queue", version="0.1.0")
 
@@ -97,12 +101,39 @@ table{{border-collapse:collapse;width:100%;}}td,th{{border:1px solid #ccc;paddin
 code{{background:#f4f4f4;padding:2px 4px;}}</style></head><body>
 <h1>GitMaestro — uzaktan kuyruk</h1>
 <p>Yeni çalıştırma (evdeki worker işi alır):</p>
-<form method="post" action="/jobs">
-  <input type="hidden" name="redirect" value="1"/>
-  <label>repo <code>owner/name</code><br/><input name="repo" size="40" required placeholder="octo/Hello-World"/></label><br/><br/>
-  <label>issue (numara veya URL)<br/><input name="issue" size="60" required placeholder="42"/></label><br/><br/>
+<p id="form-error" style="color:#b00020;display:none;"></p>
+<form id="enqueue-form">
+  <label>repo <code>owner/name</code><br/><input name="repo" id="repo" size="40" required placeholder="emirrkls/GitMaestroRemoteTest"/></label><br/><br/>
+  <label>issue (numara veya URL)<br/><input name="issue" id="issue" size="60" required placeholder="1"/></label><br/><br/>
   <button type="submit">Kuyruğa ekle</button>
 </form>
+<script>
+document.getElementById("enqueue-form").addEventListener("submit", async (e) => {{
+  e.preventDefault();
+  const err = document.getElementById("form-error");
+  err.style.display = "none";
+  const repo = document.getElementById("repo").value.trim();
+  const issue = document.getElementById("issue").value.trim();
+  try {{
+    const res = await fetch("/api/jobs", {{
+      method: "POST",
+      credentials: "same-origin",
+      headers: {{ "Content-Type": "application/json" }},
+      body: JSON.stringify({{ repo, issue }}),
+    }});
+    const data = await res.json().catch(() => ({{}}));
+    if (!res.ok) {{
+      err.textContent = data.detail || ("HTTP " + res.status);
+      err.style.display = "block";
+      return;
+    }}
+    window.location.href = "/jobs/" + data.job_id;
+  }} catch (ex) {{
+    err.textContent = String(ex);
+    err.style.display = "block";
+  }}
+}});
+</script>
 <h2>Son işler</h2>
 <table><thead><tr><th>id</th><th>durum</th><th>repo</th><th>issue</th><th></th></tr></thead>
 <tbody>{table}</tbody></table>
@@ -115,15 +146,23 @@ async def create_job_form(
     request: Request,
     creds: Annotated[HTTPBasicCredentials | None, Depends(security)],
 ) -> Response:
+    """HTML form fallback (tarayıcılar POST'ta Basic Auth göndermeyebilir)."""
     _verify_ui(creds)
     form = await request.form()
     repo = str(form.get("repo", "")).strip()
     issue = str(form.get("issue", "")).strip()
     if not _REPO_RE.match(repo):
         raise HTTPException(status_code=400, detail="repo must look like owner/name")
-    job = store.create_job(repo, issue)
+    try:
+        job = store.create_job(repo, issue)
+    except Exception as exc:
+        logger.exception("create_job failed")
+        raise HTTPException(status_code=500, detail=f"queue_error: {exc}") from exc
+    if not job:
+        raise HTTPException(status_code=500, detail="job_not_persisted")
     if form.get("redirect"):
-        return RedirectResponse(url=f"/jobs/{job.id}", status_code=303)
+        base = str(request.base_url).rstrip("/")
+        return RedirectResponse(url=f"{base}/jobs/{job.id}", status_code=303)
     return JSONResponse({"job_id": job.id, "status": job.status})
 
 
@@ -136,7 +175,13 @@ def create_job_api(
     repo = body.repo.strip()
     if not _REPO_RE.match(repo):
         raise HTTPException(status_code=400, detail="repo must look like owner/name")
-    job = store.create_job(repo, body.issue.strip())
+    try:
+        job = store.create_job(repo, body.issue.strip())
+    except Exception as exc:
+        logger.exception("create_job failed")
+        raise HTTPException(status_code=500, detail=f"queue_error: {exc}") from exc
+    if not job:
+        raise HTTPException(status_code=500, detail="job_not_persisted")
     return JSONResponse({"job_id": job.id, "status": job.status})
 
 

@@ -33,18 +33,19 @@ class Job:
 class JobStore:
     def __init__(self, db_path: Path) -> None:
         self._db_path = db_path
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         db_path.parent.mkdir(parents=True, exist_ok=True)
         self._init_schema()
 
     def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self._db_path, check_same_thread=False)
+        conn = sqlite3.connect(self._db_path, check_same_thread=False, timeout=30.0)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
+        conn.execute("PRAGMA journal_mode = WAL")
         return conn
 
     def _init_schema(self) -> None:
-        with self._lock, self._connect() as conn:
+        with self._conn() as conn:
             conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS jobs (
@@ -175,4 +176,6 @@ def default_db_path() -> Path:
     raw = os.environ.get("QUEUE_DB_PATH", "").strip()
     if raw:
         return Path(raw)
+    if os.environ.get("RENDER"):
+        return Path("/tmp/gitmaestro-queue.db")
     return Path(__file__).resolve().parent / "queue.db"

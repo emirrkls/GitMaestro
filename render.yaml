@@ -7,9 +7,11 @@ services:
     region: frankfurt
     plan: free
     buildCommand: pip install -r remote/queue_server/requirements.txt
-    startCommand: cd remote/queue_server && uvicorn app:app --host 0.0.0.0 --port $PORT
+    startCommand: cd remote/queue_server && uvicorn app:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'
     healthCheckPath: /health
     envVars:
+      - key: QUEUE_DB_PATH
+        value: /tmp/gitmaestro-queue.db
       - key: REMOTE_UI_USERNAME
         sync: false
       - key: REMOTE_UI_PASSWORD
