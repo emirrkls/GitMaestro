@@ -4,6 +4,8 @@ services:
   - type: web
     name: gitmaestro-remote-queue
     runtime: python
+    # Part 2 sunumu: kuyruk API kodu part2-demo'dan deploy edilir (main'deki Part 3 değişiklikleri UI'ı etkilemez).
+    branch: part2-demo
     region: frankfurt
     plan: free
     buildCommand: pip install -r remote/queue_server/requirements.txt

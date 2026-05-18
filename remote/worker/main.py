@@ -87,10 +87,27 @@ def finish(
     r.raise_for_status()
 
 
+def _ensure_git_ref(repo_root: Path) -> None:
+    """Optional: MAESTRO_GIT_REF=part2-demo keeps worker on the frozen demo branch."""
+    ref = _env("MAESTRO_GIT_REF")
+    if not ref:
+        return
+    proc = run(
+        ["git", "checkout", ref],
+        cwd=str(repo_root),
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        err = (proc.stderr or proc.stdout or "").strip()
+        raise RuntimeError(f"git checkout {ref!r} failed: {err}")
+
+
 def run_maestro(repo: str, issue_ref: str) -> tuple[int, str, str]:
     repo_root = _repo_root()
     if not repo_root.is_dir():
         raise SystemExit(f"MAESTRO_REPO_ROOT is not a directory: {repo_root}")
+    _ensure_git_ref(repo_root)
     py = _env("MAESTRO_PYTHON", sys.executable)
     config = _env("MAESTRO_CONFIG", "config.yaml")
     cmd = [py, "-m", "maestro", "run", "--repo", repo, "--issue", issue_ref, "--config", config]

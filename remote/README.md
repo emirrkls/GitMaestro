@@ -89,8 +89,18 @@ Ev PC’de worker’ı `QUEUE_BASE_URL=https://<senin-servis>.onrender.com` ile 
 | `MAESTRO_REPO_ROOT` | evet | `config.yaml` ve `runs/` olan repo kökü (GitMaestro kökü) |
 | `MAESTRO_PYTHON` | hayır | Varsayılan: worker’ı çalıştırdığın `python` |
 | `MAESTRO_CONFIG` | hayır | Varsayılan `config.yaml` |
+| `MAESTRO_GIT_REF` | hayır | İş öncesi `git checkout` (ör. `part2-demo` — Part 2 sunumu) |
 | `WORKER_POLL_SECONDS` | hayır | İş yokken bekleme (varsayılan 4) |
 | `MAESTRO_RUN_TIMEOUT_SECONDS` | hayır | Tek iş için üst süre (varsayılan 7200) |
+
+### Part 2 sunumu vs Part 3 geliştirme
+
+| Bileşen | Part 2 (Perşembe) | Part 3 (`main`) |
+|---------|-------------------|-----------------|
+| Render (`render.yaml`) | `branch: part2-demo` | Dashboard’da branch’i `main` yapabilirsiniz |
+| Ev worker | `MAESTRO_GIT_REF=part2-demo` veya repoda `git checkout part2-demo` | `MAESTRO_GIT_REF` boş, `main` üzerinde çalışın |
+
+`main` ile `part2-demo` ayrıldıktan sonra worker yanlışlıkla `main`’de kalırsa farklı orchestrator kodu çalışır; sunum haftası worker’da `part2-demo` kullanın.
 
 ```powershell
 cd C:\Users\Emir\Desktop\GitMaestro
