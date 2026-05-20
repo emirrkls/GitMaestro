@@ -1,0 +1,31 @@
+- Maestro step 1: dispatch agent=IssueAnalyst — IssueAnalyst is preferred early to gather more information about the issue and create a solid foundation for further analysis
+- IssueAnalyst: Issue decomposed with hypotheses and repro scaffolding.
+- Maestro step 2: dispatch agent=IssueAnalyst — IssueAnalyst's output is already present, but CodeExplorer's output is missing. However, given that IssueAnalyst has already provided a decomposition of the issue, the next step should focus on CodeExplorer to gather more information about the codebase before proceeding with test verification or patching.
+- IssueAnalyst: Issue decomposed with hypotheses and repro scaffolding.
+- Guardrail: IssueAnalyst dispatched 2x; advancing to CodeExplorer.
+- Maestro step 3: dispatch agent=CodeExplorer — Guardrail: IssueAnalyst repeated 2x without phase progress; forcing CodeExplorer.
+- CodeExplorer: Relevant code areas explored with keyword-aware ranking.
+- Maestro step 4: dispatch agent=TestVerifier — TestVerifier needs to run the baseline tests to establish the current state of the issue before any patching attempts
+- TestVerifier baseline: passed=False
+- Maestro step 5: dispatch agent=PatchStrategist — The issue is related to rounding errors during credit allocation and insufficient precision in credit calculation. A patch strategist is needed to plan a multi-snippet edit before patching, as the issue is complex and requires careful consideration of different scenarios and edge cases.
+- Drafted 1 snippet edit(s) for Maestro routing.
+- Maestro step 6: dispatch agent=PatchAuthor — Patch strategy is ready and no patch has been produced yet
+- Maestro step 7: dispatch agent=PatchReviewer — Guardrail: material patch exists; review before any other phase.
+- PatchReviewer: approve
+- Maestro step 8: dispatch agent=TestVerifier — The current patch has been approved and we need to verify if it resolves the issue by running the target tests
+- TestVerifier: No regression but issue unresolved: 1 target failure(s) unchanged.
+- Reverted rejected patch from workspace.
+- Maestro step 9: dispatch agent=PatchAuthor — Issue analysis and code exploration are complete, and the pre-patch test baseline has been run. The next step is to produce a minimal patch to address the issue. PatchAuthor is the appropriate agent for this task.
+- PatchAuthor produced no material diff.
+- Maestro step 10: dispatch agent=PatchAuthor — Issue analysis and code exploration are complete, and the pre-patch test baseline has been run. The next step is to produce a patch to address the issue. Since the issue is related to rounding errors during credit allocation, the patch should focus on improving the precision of credit calculation.
+- PatchAuthor produced no material diff.
+- Guardrail: PatchAuthor repeated without material patch; allowing revision instead of reviewer skip loop.
+- Maestro step 11: dispatch agent=PatchAuthor — Issue analysis and code exploration are complete, and the issue is well-defined. The next step is to produce a patch to address the issue.
+- Maestro step 12: dispatch agent=PatchReviewer — Guardrail: material patch exists; review before any other phase.
+- PatchReviewer: approve
+- Maestro step 13: dispatch agent=TestVerifier — The current patch has been approved, but the latest tests still show the issue as unresolved. We need to verify the patch again to ensure it resolves the issue.
+- TestVerifier: No regression but issue unresolved: 1 target failure(s) unchanged.
+- Reverted rejected patch from workspace.
+- Maestro step 14: dispatch agent=PatchAuthor — Issue analysis and code exploration are complete. Test baseline has been run and shows the issue is not resolved. It's time to attempt a patch.
+- PatchAuthor produced no material diff.
+- Escalated: patch_author_repeated_non_material

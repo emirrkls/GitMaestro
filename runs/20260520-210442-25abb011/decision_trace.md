@@ -1,0 +1,23 @@
+- Maestro step 1: dispatch agent=IssueAnalyst — IssueAnalyst is preferred early on to gather more information about the issue and provide a solid foundation for further analysis
+- IssueAnalyst: Issue decomposed with hypotheses and repro scaffolding.
+- Maestro step 2: dispatch agent=IssueAnalyst — IssueAnalyst output is already present, but CodeExplorer and TestVerifier outputs are missing. IssueAnalyst can further refine the hypotheses to help guide the next steps.
+- IssueAnalyst: Issue decomposed with hypotheses and repro scaffolding.
+- Guardrail: IssueAnalyst dispatched 2x; advancing to CodeExplorer.
+- Maestro step 3: dispatch agent=CodeExplorer — Guardrail: IssueAnalyst repeated 2x without phase progress; forcing CodeExplorer.
+- CodeExplorer: Relevant code areas explored with keyword-aware ranking.
+- Maestro step 4: dispatch agent=TestVerifier — TestVerifier needs to run the baseline tests to determine the current state of the issue before any patching attempts
+- TestVerifier baseline: passed=False
+- Maestro step 5: dispatch agent=PatchStrategist — The issue analysis and hypotheses suggest a complex calculation issue with percentage coupons, and the candidate files list is extensive. A PatchStrategist can help plan a multi-snippet edit approach before patching.
+- Drafted 1 snippet edit(s) for Maestro routing.
+- Maestro step 6: dispatch agent=PatchAuthor — The patch strategy is ready and the issue analysis is complete. It's time to produce a patch based on the planned edits.
+- PatchReviewer: approve (ablation skip_patch_reviewer guardrail)
+- Maestro step 7: dispatch agent=PatchReviewer — Guardrail: material patch exists; review before another author pass.
+- PatchReviewer skipped: no pending material patch.
+- Maestro step 8: dispatch agent=TestVerifier — The current patch has been approved and we need to verify if it resolves the issue by running the target tests
+- TestVerifier: Issue resolved vs red baseline. fixed_by_patch=1, new_failures=0.
+- Maestro step 9: finish_success agent=None — The latest tests have passed, indicating that the issue has been resolved by the patch, and there are no new failures. The test policy has been met, and the patch has been approved.
+- Blocked finish_success: ReleaseScribe not run yet.
+- finish_success ready except ReleaseScribe; dispatching scribe before retry.
+- ReleaseScribe: Commit message and PR draft prepared.
+- Maestro step 10: finish_success agent=None — The latest tests have passed, indicating that the issue has been resolved by the patch. The test policy has been met, with the issue resolved and no new failures introduced.
+- Branch prepared: maestro/ablation-v1-1. Commit disabled by config. 

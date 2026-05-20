@@ -1,0 +1,44 @@
+# Part 5 V1: no PatchReviewer (auto-approve material patches). Based on config.benchmark.yaml.
+models:
+  default: "nvidia/meta/llama-3.3-70b-instruct"
+  critic: "local/qwen2.5-coder:14b"
+  ad_hoc_overrides:
+    Maestro: "nvidia/meta/llama-3.3-70b-instruct"
+    IssueAnalyst: "nvidia/meta/llama-3.3-70b-instruct"
+    CodeExplorer: "nvidia/meta/llama-3.3-70b-instruct"
+    PatchAuthor: "local/qwen2.5-coder:14b"
+    PatchStrategist: "local/qwen2.5-coder:14b"
+    PatchReviewer: "local/qwen2.5-coder:14b"
+    TestVerifier: "local/qwen2.5-coder:7b"
+    ReleaseScribe: "local/qwen2.5-coder:7b"
+
+runtime:
+  mock_llm: false
+  allow_commit: false
+  allow_push: false
+  allow_pr_draft: false
+  max_retries: 10
+  ad_hoc_budget: 1
+  test_timeout_seconds: 120
+  test_command_allowlist: ["python -m unittest", "pytest", "python -m pytest"]
+  github_enabled: true
+  branch_prefix: "maestro/ablation-v1"
+  skip_patch_reviewer: true
+  skip_triage_agents: false
+  llm_backend: "hybrid"
+  ollama_base_url: "http://127.0.0.1:11434/v1"
+  ollama_timeout_seconds: 720
+  ollama_max_tokens: 8192
+  ollama_think: false
+  nvidia_base_url: "https://integrate.api.nvidia.com/v1"
+  nvidia_timeout_seconds: 180
+  nvidia_max_tokens: 4096
+  nvidia_rpm_limit: 40
+  test_baseline_before_patch: true
+  test_repair_max_retries: 2
+  maestro_max_conductor_steps: 48
+  require_fix_on_red_baseline: true
+  post_issue_feedback_comments: false
+  critic_final_retry_min_confidence: 0.92
+  agentic_fatigue_escalation_enabled: true
+  patch_strategy_rewrite_enabled: true

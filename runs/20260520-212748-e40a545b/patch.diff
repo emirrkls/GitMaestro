@@ -1,0 +1,13 @@
+diff --git a/retailflow/billing.py b/retailflow/billing.py
+index 13f3a49..e9bcd9e 100644
+--- a/retailflow/billing.py
++++ b/retailflow/billing.py
+@@ -9,7 +9,7 @@ class BillingService:
+             raise ValueError("discount_percent cannot be negative")
+         if discount_percent > 100:
+             raise ValueError("discount_percent cannot exceed 100")
+-        return round(subtotal * (1 - discount_percent), 2)
++        return round(subtotal * (1 - discount_percent / 100), 2)
+ 
+     def compute_tax(self, order: Order, discounted_subtotal: float) -> float:
+         if order.tax_rate < 0:

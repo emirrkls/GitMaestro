@@ -14,7 +14,16 @@ class ModelRoutingTests(unittest.TestCase):
             )
         )
         self.assertEqual(router.model_for("Critic"), "llama-4-scout")
+        self.assertEqual(router.model_for("PatchReviewer"), "llama-4-scout")
         self.assertEqual(router.model_for("Analyst"), "gemini-2.5-flash")
+        router2 = ModelRouter(
+            ModelConfig(
+                default="small",
+                critic="big",
+                ad_hoc_overrides={"PatchAuthor": "coder"},
+            )
+        )
+        self.assertEqual(router2.model_for("Surgeon"), "coder")
 
 
 if __name__ == "__main__":

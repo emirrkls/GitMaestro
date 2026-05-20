@@ -1,0 +1,1 @@
+fix(loyalty): correct loyalty point accumulation for repeat purchases

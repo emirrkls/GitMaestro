@@ -1,0 +1,24 @@
+- Maestro step 1: dispatch agent=IssueAnalyst — IssueAnalyst is preferred early to decompose the issue into hypotheses, repro steps, and analysis notes, which will help in understanding the problem better.
+- IssueAnalyst: Issue decomposed with hypotheses and repro scaffolding.
+- Maestro step 2: dispatch agent=IssueAnalyst — IssueAnalyst's output is already present, but CodeExplorer's output is missing. However, given the current phase status, it's crucial to ensure the issue is well understood before proceeding with code exploration. Refining hypotheses and repro steps will help in identifying the root cause of the issue.
+- IssueAnalyst: Issue decomposed with hypotheses and repro scaffolding.
+- Guardrail: IssueAnalyst dispatched 2x; advancing to CodeExplorer.
+- Maestro step 3: dispatch agent=CodeExplorer — Guardrail: IssueAnalyst repeated 2x without phase progress; forcing CodeExplorer.
+- CodeExplorer: Relevant code areas explored with keyword-aware ranking.
+- Maestro step 4: dispatch agent=TestVerifier — TestVerifier needs to run the baseline tests to determine the current state of the issue before any patching attempts
+- TestVerifier baseline: passed=False
+- Maestro step 5: dispatch agent=PatchAuthor — Guardrail: patch strategy is ready or budget is spent; moving to PatchAuthor.
+- Maestro step 6: spawn_patch_strategist agent=PatchStrategist — The issue is identified and the pre-patch tests have been run, but no patch has been generated yet. Given the complexity of the issue and the multiple hypotheses, it's necessary to plan a multi-snippet edit before patching. The PatchStrategist will help determine the best approach to address the issue.
+- PatchStrategist budget exhausted.
+- Maestro step 7: spawn_patch_strategist agent=PatchStrategist — The issue analysis and code exploration are complete, but a patch has not been attempted yet. Given the complexity of the issue and the multiple hypotheses, it's beneficial to plan a multi-snippet edit before patching.
+- PatchStrategist budget exhausted.
+- Maestro step 8: dispatch agent=PatchReviewer — Guardrail: material patch exists; review before any other phase.
+- PatchReviewer: approve
+- Maestro step 9: dispatch agent=TestVerifier — The current patch has been approved and we need to verify if it resolves the issue by running the target tests again
+- TestVerifier: Issue resolved vs red baseline. fixed_by_patch=1, new_failures=0.
+- Maestro step 10: finish_success agent=None — The latest tests passed and the test policy indicates that the issue is resolved with no new failures, and the patch has been approved.
+- Blocked finish_success: ReleaseScribe not run yet.
+- finish_success ready except ReleaseScribe; dispatching scribe before retry.
+- ReleaseScribe: Commit message and PR draft prepared.
+- Maestro step 11: finish_success agent=None — Guardrail: verified patch resolved the issue; finishing successfully.
+- Branch prepared: maestro/ablation-v3-3. Commit disabled by config. 

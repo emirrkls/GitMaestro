@@ -1,0 +1,1 @@
+fix(cart): apply free shipping at exact $50 threshold

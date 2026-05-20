@@ -27,10 +27,10 @@ def _normalize_edits(raw: Any) -> list[SnippetEdit]:
     return out
 
 
-class PatchPlannerAgent(BaseAgent):
+class PatchStrategistAgent(BaseAgent):
     """Ad-hoc agent: emits structured snippet edits (consumed by Surgeon)."""
 
-    name = "PatchPlanner"
+    name = "PatchStrategist"
 
     def run(self, context: dict[str, object]) -> AgentResult:
         issue = str(context.get("issue_text", ""))
@@ -78,3 +78,6 @@ class PatchPlannerAgent(BaseAgent):
             "planner_model": response.model,
         }
         return AgentResult(summary=summary, payload=payload, confidence=0.72 if edits else 0.4)
+
+
+PatchPlannerAgent = PatchStrategistAgent

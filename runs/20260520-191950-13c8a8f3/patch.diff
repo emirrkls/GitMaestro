@@ -1,0 +1,11 @@
+--- a/retailflow/catalog.py
++++ b/retailflow/catalog.py
+@@ -20,7 +20,7 @@
+ 
+     def bundle_total(self, bundle_id: str) -> float:
+         bundle = self._bundles[bundle_id]
+-        return round(sum(self.price(sku) for sku in bundle.skus), 2)
++        return round(bundle.fixed_price, 2)
+ 
+     def bundle_checkout_price(self, bundle_id: str) -> float:
+         bundle = self._bundles[bundle_id]

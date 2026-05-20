@@ -1,0 +1,22 @@
+- Maestro step 1: dispatch agent=IssueAnalyst — IssueAnalyst is preferred early on to understand the issue and create a solid foundation for further analysis and potential patching
+- IssueAnalyst: Issue decomposed with hypotheses and repro scaffolding.
+- Maestro step 2: dispatch agent=IssueAnalyst — IssueAnalyst's output is already present, but CodeExplorer's output is missing. However, given that IssueAnalyst has already provided a solid foundation, the next logical step is to dispatch CodeExplorer to gather more information about the codebase and identify potential impact zones.
+- IssueAnalyst: Issue decomposed with hypotheses and repro scaffolding.
+- Guardrail: IssueAnalyst dispatched 2x; advancing to CodeExplorer.
+- Maestro step 3: dispatch agent=CodeExplorer — Guardrail: IssueAnalyst repeated 2x without phase progress; forcing CodeExplorer.
+- CodeExplorer: Relevant code areas explored with keyword-aware ranking.
+- Maestro step 4: dispatch agent=TestVerifier — Test baseline is pending and needs to be run before attempting to patch the issue
+- TestVerifier baseline: passed=False
+- Guardrail: blocking IssueAnalyst regression; analysis and scout already done.
+- Maestro step 5: dispatch agent=PatchAuthor — Guardrail: analysis is complete and repair context exists; IssueAnalyst is no longer needed.
+- PatchReviewer: approve (ablation skip_patch_reviewer guardrail)
+- Maestro step 6: dispatch agent=PatchStrategist — The issue requires handling multiple reservations for the same SKU simultaneously, which suggests a complex patch. Spawn PatchStrategist to plan the edits before patching.
+- No snippet-level plan produced.
+- Maestro step 7: dispatch agent=TestVerifier — The current patch has been approved and now it's time to verify if it resolves the issue by running the target tests
+- TestVerifier: Issue resolved vs red baseline. fixed_by_patch=1, new_failures=0.
+- Maestro step 8: finish_success agent=None — Guardrail: verified patch resolved the issue; finishing successfully.
+- Blocked finish_success: ReleaseScribe not run yet.
+- finish_success ready except ReleaseScribe; dispatching scribe before retry.
+- ReleaseScribe: Commit message and PR draft prepared.
+- Maestro step 9: finish_success agent=None — Guardrail: verified patch resolved the issue; finishing successfully.
+- Branch prepared: maestro/ablation-v1-7. Commit disabled by config. 

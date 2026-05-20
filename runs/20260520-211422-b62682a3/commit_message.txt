@@ -1,0 +1,1 @@
+fix(warehouse): resolve second reservation crash for same SKU

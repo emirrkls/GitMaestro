@@ -1,0 +1,12 @@
+--- a/retailflow/loyalty.py
++++ b/retailflow/loyalty.py
+@@ -13,8 +13,7 @@
+     def earn_for_order(self, customer_id: str, order_id: str, paid_amount: float) -> int:
+         prior = self._last_order.get(customer_id)
+         earned = int(paid_amount * self.points_per_currency)
+-        if prior is not None:
+-            earned += earned
++        # Remove the double earning logic for repeat orders
+         self._last_order[customer_id] = order_id
+         self._balances[customer_id] = self.balance(customer_id) + earned
+         return earned

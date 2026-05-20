@@ -1,0 +1,12 @@
+diff --git a/retailflow/shipping.py b/retailflow/shipping.py
+index 51b9db2..37089a1 100644
+--- a/retailflow/shipping.py
++++ b/retailflow/shipping.py
+@@ -9,6 +9,6 @@ class ShippingCalculator:
+     def fee_for_subtotal(self, merchandise_subtotal: float) -> float:
+         if merchandise_subtotal < 0:
+             raise ValueError("subtotal cannot be negative")
+-        if merchandise_subtotal > self.free_threshold:
++        if merchandise_subtotal >= self.free_threshold:
+             return 0.0
+         return self.flat_rate

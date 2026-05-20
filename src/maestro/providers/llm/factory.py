@@ -3,14 +3,105 @@ from __future__ import annotations
 import os
 import sys
 import time
+from collections import deque
+from threading import Lock
 from typing import Callable
 
 from maestro.config.settings import RuntimeConfig
 from maestro.providers.llm.base import LLMProvider
 from maestro.providers.llm.gemini import GeminiProvider
 from maestro.providers.llm.mock import MockLLMProvider
+from maestro.providers.llm.nvidia_provider import NvidiaProvider
 from maestro.providers.llm.ollama_provider import OllamaProvider
 from maestro.providers.llm.openrouter import OpenRouterProvider
+
+
+class RPMRateLimiter:
+    def __init__(self, rpm_limit: int) -> None:
+        self.rpm_limit = max(0, int(rpm_limit))
+        self._hits: deque[float] = deque()
+        self._lock = Lock()
+
+    def acquire(self) -> None:
+        if self.rpm_limit <= 0:
+            return
+        while True:
+            now = time.time()
+            with self._lock:
+                cutoff = now - 60.0
+                while self._hits and self._hits[0] < cutoff:
+                    self._hits.popleft()
+                if len(self._hits) < self.rpm_limit:
+                    self._hits.append(now)
+                    return
+                wait_s = max(0.01, 60.0 - (now - self._hits[0]))
+            time.sleep(min(wait_s, 1.0))
+
+
+class RateLimitedProvider(LLMProvider):
+    def __init__(
+        self,
+        inner: LLMProvider,
+        *,
+        rpm_limit: int,
+        provider_name: str,
+        model_rpm_overrides: dict[str, int] | None = None,
+    ) -> None:
+        self.inner = inner
+        self.provider_name = provider_name
+        self.default_limiter = RPMRateLimiter(rpm_limit)
+        self.model_rpm_overrides = {k: max(0, int(v)) for k, v in (model_rpm_overrides or {}).items()}
+        self.model_limiters: dict[str, RPMRateLimiter] = {}
+        self._lock = Lock()
+
+    def complete(self, *, model: str, prompt: str):
+        limiter = self._limiter_for_model(model)
+        limiter.acquire()
+        return self.inner.complete(model=model, prompt=prompt)
+
+    def _limiter_for_model(self, model: str) -> RPMRateLimiter:
+        rpm = self.model_rpm_overrides.get(model)
+        if rpm is None:
+            return self.default_limiter
+        with self._lock:
+            limiter = self.model_limiters.get(model)
+            if limiter is None:
+                limiter = RPMRateLimiter(rpm)
+                self.model_limiters[model] = limiter
+            return limiter
+
+
+class PrefixHybridProvider(LLMProvider):
+    def __init__(
+        self,
+        *,
+        local: LLMProvider,
+        nvidia: LLMProvider | None,
+    ) -> None:
+        self.local = local
+        self.nvidia = nvidia
+
+    def complete(self, *, model: str, prompt: str):
+        prefix, resolved = _split_model_prefix(model)
+        if prefix in (None, "local", "ollama"):
+            return self.local.complete(model=resolved, prompt=prompt)
+        if prefix == "nvidia":
+            if self.nvidia is None:
+                raise RuntimeError(
+                    "Model requested NVIDIA provider but NVIDIA_API_KEY/NVCF_API_KEY is not set."
+                )
+            return self.nvidia.complete(model=resolved, prompt=prompt)
+        raise RuntimeError(
+            f"Unknown hybrid model prefix '{prefix}' for model='{model}'. "
+            "Use local/<model> or nvidia/<model>."
+        )
+
+
+def _split_model_prefix(model: str) -> tuple[str | None, str]:
+    head, sep, tail = model.partition("/")
+    if sep and head.lower() in {"local", "ollama", "nvidia"}:
+        return head.lower(), tail.strip()
+    return None, model
 
 
 class RoutedLLMProvider(LLMProvider):
@@ -95,6 +186,36 @@ def build_llm_provider(runtime: RuntimeConfig) -> LLMProvider:
             max_tokens=runtime.ollama_max_tokens,
             think=runtime.ollama_think,
         )
+    if runtime.llm_backend == "hybrid":
+        print("[maestro] Using Hybrid backend (local + NVIDIA via model prefixes).", file=sys.stderr)
+        local_provider = OllamaProvider(
+            base_url=runtime.ollama_base_url,
+            timeout_seconds=runtime.ollama_timeout_seconds,
+            max_tokens=runtime.ollama_max_tokens,
+            think=runtime.ollama_think,
+        )
+        nvidia_key = os.getenv("NVIDIA_API_KEY", "").strip() or os.getenv("NVCF_API_KEY", "").strip()
+        nvidia_provider: LLMProvider | None = None
+        if nvidia_key:
+            nvidia_raw = NvidiaProvider(
+                api_key=nvidia_key,
+                base_url=runtime.nvidia_base_url,
+                timeout_seconds=runtime.nvidia_timeout_seconds,
+                max_tokens=runtime.nvidia_max_tokens,
+            )
+            nvidia_provider = RateLimitedProvider(
+                nvidia_raw,
+                rpm_limit=runtime.nvidia_rpm_limit,
+                provider_name="nvidia",
+                model_rpm_overrides=runtime.nvidia_rpm_overrides,
+            )
+        else:
+            print(
+                "[maestro] WARNING: Hybrid backend active but NVIDIA_API_KEY/NVCF_API_KEY missing. "
+                "nvidia/* models will fail; local/* models continue.",
+                file=sys.stderr,
+            )
+        return PrefixHybridProvider(local=local_provider, nvidia=nvidia_provider)
 
     google_key = os.getenv("GOOGLE_API_KEY", "").strip()
     openrouter_key = os.getenv("OPENROUTER_API_KEY", "").strip()

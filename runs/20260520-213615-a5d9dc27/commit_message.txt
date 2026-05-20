@@ -1,0 +1,1 @@
+fix(warehouse): handle second reservation for same SKU

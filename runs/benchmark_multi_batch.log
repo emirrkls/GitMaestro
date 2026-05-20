@@ -1,0 +1,35 @@
+[2026-05-20 16:00:42] === Benchmark multi-agent batch start ===
+[2026-05-20 16:00:42] --- Issue 1 start ---
+[2026-05-20 16:00:42]   EXCEPTION: [maestro] Using Ollama backend (local, no Gemini/OpenRouter quota).
+[2026-05-20 16:00:42] --- Issue 1 done exit=1 elapsed=0s task_id= ---
+[2026-05-20 16:00:42] --- Issue 2 start ---
+[2026-05-20 16:00:43]   EXCEPTION: [maestro] Using Ollama backend (local, no Gemini/OpenRouter quota).
+[2026-05-20 16:00:43] --- Issue 2 done exit=1 elapsed=0s task_id= ---
+[2026-05-20 16:00:43] --- Issue 3 start ---
+[2026-05-20 16:00:43]   EXCEPTION: [maestro] Using Ollama backend (local, no Gemini/OpenRouter quota).
+[2026-05-20 16:00:43] --- Issue 3 done exit=1 elapsed=0s task_id= ---
+[2026-05-20 16:00:43] --- Issue 4 start ---
+[2026-05-20 16:00:43]   EXCEPTION: [maestro] Using Ollama backend (local, no Gemini/OpenRouter quota).
+[2026-05-20 16:00:43] --- Issue 4 done exit=1 elapsed=0s task_id= ---
+[2026-05-20 16:00:43] --- Issue 5 start ---
+[2026-05-20 16:00:44]   EXCEPTION: [maestro] Using Ollama backend (local, no Gemini/OpenRouter quota).
+[2026-05-20 16:00:44] --- Issue 5 done exit=1 elapsed=0s task_id= ---
+[2026-05-20 16:00:44] --- Issue 6 start ---
+[2026-05-20 16:00:44]   EXCEPTION: [maestro] Using Ollama backend (local, no Gemini/OpenRouter quota).
+[2026-05-20 16:00:44] --- Issue 6 done exit=1 elapsed=0s task_id= ---
+[2026-05-20 16:00:44] --- Issue 7 start ---
+[2026-05-20 16:00:44]   EXCEPTION: [maestro] Using Ollama backend (local, no Gemini/OpenRouter quota).
+[2026-05-20 16:00:44] --- Issue 7 done exit=1 elapsed=0s task_id= ---
+[2026-05-20 16:00:44] --- Issue 8 start ---
+[2026-05-20 16:00:45]   EXCEPTION: [maestro] Using Ollama backend (local, no Gemini/OpenRouter quota).
+[2026-05-20 16:00:45] --- Issue 8 done exit=1 elapsed=0s task_id= ---
+[2026-05-20 16:00:45] === Summary ===
+[2026-05-20 16:00:45] Issue 1: exit=1 seconds=0 task_id=
+[2026-05-20 16:00:45] Issue 2: exit=1 seconds=0 task_id=
+[2026-05-20 16:00:45] Issue 3: exit=1 seconds=0 task_id=
+[2026-05-20 16:00:45] Issue 4: exit=1 seconds=0 task_id=
+[2026-05-20 16:00:45] Issue 5: exit=1 seconds=0 task_id=
+[2026-05-20 16:00:45] Issue 6: exit=1 seconds=0 task_id=
+[2026-05-20 16:00:45] Issue 7: exit=1 seconds=0 task_id=
+[2026-05-20 16:00:45] Issue 8: exit=1 seconds=0 task_id=
+[2026-05-20 16:00:45] === Batch complete ===

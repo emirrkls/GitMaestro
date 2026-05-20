@@ -1,0 +1,9 @@
+- Maestro step 1: dispatch agent=TestVerifier — Ablation skip_triage_agents: run baseline before patching.
+- TestVerifier baseline: passed=False
+- Maestro step 2: dispatch agent=PatchAuthor — Ablation skip_triage_agents: triage skipped; patching from baseline.
+- PatchAuthor produced no material diff.
+- Maestro step 3: dispatch agent=PatchAuthor — Ablation skip_triage_agents: triage skipped; patching from baseline.
+- PatchAuthor produced no material diff.
+- Maestro step 4: dispatch agent=PatchAuthor — Ablation skip_triage_agents: triage skipped; patching from baseline.
+- PatchAuthor produced no material diff.
+- Escalated: patch_author_repeated_non_material

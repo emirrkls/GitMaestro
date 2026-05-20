@@ -1,0 +1,85 @@
+{
+  "score_id": "3c25b636-bbe0-4058-b3d2-5ad45dad81e0",
+  "complexity": "high",
+  "movements": [
+    {
+      "agent": "Maestro",
+      "task": "Conductor routes specialists dynamically",
+      "depends_on": [],
+      "timeout": 120,
+      "on_reject": null
+    },
+    {
+      "agent": "IssueAnalyst",
+      "task": "Issue decomposition and repro",
+      "depends_on": [],
+      "timeout": 120,
+      "on_reject": null
+    },
+    {
+      "agent": "CodeExplorer",
+      "task": "Code area discovery",
+      "depends_on": [
+        "IssueAnalyst"
+      ],
+      "timeout": 120,
+      "on_reject": null
+    },
+    {
+      "agent": "PatchAuthor",
+      "task": "Minimal patch",
+      "depends_on": [
+        "CodeExplorer"
+      ],
+      "timeout": 120,
+      "on_reject": null
+    },
+    {
+      "agent": "PatchReviewer",
+      "task": "Independent patch review",
+      "depends_on": [
+        "PatchAuthor"
+      ],
+      "timeout": 120,
+      "on_reject": {
+        "target": "PatchAuthor",
+        "max_retry": 2
+      }
+    },
+    {
+      "agent": "TestVerifier",
+      "task": "Run tests",
+      "depends_on": [
+        "PatchReviewer"
+      ],
+      "timeout": 120,
+      "on_reject": null
+    },
+    {
+      "agent": "ReleaseScribe",
+      "task": "Draft commit and PR",
+      "depends_on": [
+        "TestVerifier"
+      ],
+      "timeout": 120,
+      "on_reject": null
+    },
+    {
+      "agent": "PatchStrategist",
+      "task": "Structured patch decomposition",
+      "depends_on": [
+        "CodeExplorer"
+      ],
+      "timeout": 120,
+      "on_reject": {
+        "policy": "human_escalation"
+      }
+    }
+  ],
+  "escalation_policy": {
+    "max_retry": 2,
+    "on_retry_exhausted": "human_escalation"
+  },
+  "ad_hoc_allowed": true,
+  "ad_hoc_budget": 0
+}

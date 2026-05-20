@@ -1,0 +1,26 @@
+diff --git a/retailflow/inventory.py b/retailflow/inventory.py
+index 918d825..b8fa742 100644
+--- a/retailflow/inventory.py
++++ b/retailflow/inventory.py
+@@ -27,17 +27,11 @@ class InventoryService:
+             raise ValueError("quantity must be positive")
+         if self.available(sku) < quantity:
+             raise ValueError("insufficient stock")
+-        entry = self._records.get(sku)
+-        if entry is None:
+-            reservation_id = str(uuid4())
+-            entry = Reservation(reservation_id=reservation_id, sku=sku, quantity=quantity)
+-            self._records[sku] = entry
+-            self._reserved[sku] = self._reserved.get(sku, 0) + quantity
+-            return entry
+-        entry.quantity += quantity
++        reservation_id = str(uuid4())
++        entry = Reservation(reservation_id=reservation_id, sku=sku, quantity=quantity)
++        self._records[reservation_id] = entry
+         self._reserved[sku] = self._reserved.get(sku, 0) + quantity
+-        return self._records[entry.reservation_id]
+-
++        return entry
+     def release(self, reservation_id: str) -> None:
+         match = next((r for r in self._records.values() if r.reservation_id == reservation_id), None)
+         if match is None:

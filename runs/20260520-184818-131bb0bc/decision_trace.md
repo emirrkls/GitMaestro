@@ -1,0 +1,21 @@
+- Maestro step 1: dispatch agent=IssueAnalyst — IssueAnalyst is preferred early to decompose the issue into hypotheses, repro steps, and analysis notes, which will help guide the rest of the repair process
+- IssueAnalyst: Issue decomposed with hypotheses and repro scaffolding.
+- Maestro step 2: dispatch agent=IssueAnalyst — IssueAnalyst's output is already present, but CodeExplorer's output is missing. However, given that IssueAnalyst has already provided hypotheses, the next best step is to dispatch CodeExplorer to provide more context about the codebase before proceeding with test_baseline or patch_strategy.
+- IssueAnalyst: Issue decomposed with hypotheses and repro scaffolding.
+- Guardrail: IssueAnalyst dispatched 2x; advancing to CodeExplorer.
+- Maestro step 3: dispatch agent=CodeExplorer — Guardrail: IssueAnalyst repeated 2x without phase progress; forcing CodeExplorer.
+- CodeExplorer: Relevant code areas explored with keyword-aware ranking.
+- Maestro step 4: dispatch agent=TestVerifier — TestVerifier needs to run the baseline tests to determine the current state of the issue before any patching attempts
+- TestVerifier baseline: passed=False
+- Guardrail: blocking IssueAnalyst regression; analysis and scout already done.
+- Maestro step 5: dispatch agent=PatchAuthor — Guardrail: analysis is complete and repair context exists; IssueAnalyst is no longer needed.
+- PatchAuthor produced no material diff.
+- Maestro step 6: dispatch agent=PatchAuthor — Issue analysis and code exploration are complete, and the pre-patch tests have been run. The next step is to produce a patch to address the issue.
+- PatchAuthor produced no material diff.
+- Guardrail: PatchAuthor repeated without material patch; allowing revision instead of reviewer skip loop.
+- Maestro step 7: dispatch agent=PatchAuthor — Issue analysis and code exploration are complete, and the pre-patch tests have been run. The next step is to produce a patch to address the issue.
+- PatchAuthor produced no material diff.
+- Guardrail: PatchAuthor repeated without material patch; allowing revision instead of reviewer skip loop.
+- Maestro step 8: dispatch agent=PatchAuthor — Issue analysis and code exploration are complete, and the pre-patch tests have been run. The next step is to produce a patch to address the issue.
+- PatchAuthor produced no material diff.
+- Escalated: patch_author_repeated_non_material

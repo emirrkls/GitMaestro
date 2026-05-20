@@ -1,0 +1,22 @@
+- Maestro step 1: dispatch agent=IssueAnalyst — IssueAnalyst should be dispatched first to decompose the issue and provide a clear understanding of the problem
+- IssueAnalyst: Issue decomposed with hypotheses and repro scaffolding.
+- Maestro step 2: dispatch agent=IssueAnalyst — IssueAnalyst output is already present, but to ensure thoroughness and adherence to the rules, refining the hypotheses will provide a solid foundation for the subsequent steps, especially considering the CodeExplorer's output is missing and the test baseline is pending.
+- IssueAnalyst: Issue decomposed with hypotheses and repro scaffolding.
+- Maestro step 3: dispatch agent=CodeExplorer — CodeExplorer's output is missing and it's essential to understand the impact zones before proceeding with patching
+- CodeExplorer: Relevant code areas explored with keyword-aware ranking.
+- Maestro step 4: dispatch agent=TestVerifier — Test baseline is pending and needs to be run before attempting to patch the issue
+- TestVerifier baseline: passed=False
+- Maestro step 5: dispatch agent=PatchStrategist — The issue is identified and the code exploration is done. The next step is to plan a patch before authoring it, especially since the issue involves a potential comparison or rounding problem, indicating a need for a thoughtful patch strategy.
+- Drafted 1 snippet edit(s) for Maestro routing.
+- Maestro step 6: dispatch agent=PatchAuthor — The patch strategy is ready and the issue analysis suggests a potential problem with the comparison operator. PatchAuthor should produce a minimal unified-diff style edit in the workspace based on the provided patch strategy.
+- PatchReviewer: approve (ablation skip_patch_reviewer guardrail)
+- Maestro step 7: dispatch agent=PatchReviewer — Guardrail: material patch exists; review before another author pass.
+- PatchReviewer skipped: no pending material patch.
+- Maestro step 8: dispatch agent=TestVerifier — The current patch has been approved and the pre-patch tests have already been run. The next step is to verify the patch by running the automated tests again to check if the issue is resolved.
+- TestVerifier: Issue resolved vs red baseline. fixed_by_patch=1, new_failures=0.
+- Maestro step 9: finish_success agent=None — Guardrail: verified patch resolved the issue; finishing successfully.
+- Blocked finish_success: ReleaseScribe not run yet.
+- finish_success ready except ReleaseScribe; dispatching scribe before retry.
+- ReleaseScribe: Commit message and PR draft prepared.
+- Maestro step 10: finish_success agent=None — Guardrail: verified patch resolved the issue; finishing successfully.
+- Branch prepared: maestro/ablation-v1-3. Commit disabled by config. 

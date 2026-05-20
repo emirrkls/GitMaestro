@@ -42,24 +42,25 @@ def build_initial_score(issue_text: str, ad_hoc_budget: int, max_retries: int) -
     else:
         complexity = "high" if any(k in lowered for k in ("crash", "race", "security")) else "low"
     movements = [
-        Movement(agent="Analyst", task="Issue decomposition and repro"),
-        Movement(agent="Scout", task="Code area discovery", depends_on=["Analyst"]),
-        Movement(agent="Surgeon", task="Minimal patch", depends_on=["Scout"]),
+        Movement(agent="Maestro", task="Conductor routes specialists dynamically"),
+        Movement(agent="IssueAnalyst", task="Issue decomposition and repro"),
+        Movement(agent="CodeExplorer", task="Code area discovery", depends_on=["IssueAnalyst"]),
+        Movement(agent="PatchAuthor", task="Minimal patch", depends_on=["CodeExplorer"]),
         Movement(
-            agent="Critic",
+            agent="PatchReviewer",
             task="Independent patch review",
-            depends_on=["Surgeon"],
-            on_reject={"target": "Surgeon", "max_retry": max_retries},
+            depends_on=["PatchAuthor"],
+            on_reject={"target": "PatchAuthor", "max_retry": max_retries},
         ),
-        Movement(agent="Tester", task="Run tests", depends_on=["Critic"]),
-        Movement(agent="Scribe", task="Draft commit and PR", depends_on=["Tester"]),
+        Movement(agent="TestVerifier", task="Run tests", depends_on=["PatchReviewer"]),
+        Movement(agent="ReleaseScribe", task="Draft commit and PR", depends_on=["TestVerifier"]),
     ]
     if complexity == "high":
         movements.append(
             Movement(
-                agent="AdHoc",
-                task="Domain-specific investigation",
-                depends_on=["Scout"],
+                agent="PatchStrategist",
+                task="Structured patch decomposition",
+                depends_on=["CodeExplorer"],
                 on_reject={"policy": "human_escalation"},
             )
         )
@@ -68,7 +69,7 @@ def build_initial_score(issue_text: str, ad_hoc_budget: int, max_retries: int) -
             Movement(
                 agent="Maestro",
                 task="Clarification or escalation branch",
-                depends_on=["Analyst"],
+                depends_on=["IssueAnalyst"],
                 on_reject={"policy": "human_escalation"},
             )
         )

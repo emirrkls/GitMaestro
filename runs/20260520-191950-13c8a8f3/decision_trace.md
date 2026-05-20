@@ -1,0 +1,28 @@
+- Maestro step 1: dispatch agent=IssueAnalyst — IssueAnalyst should be dispatched first to decompose the issue into hypotheses, repro steps, and analysis notes, as its output is missing and it is preferred early in the process.
+- IssueAnalyst: Issue decomposed with hypotheses and repro scaffolding.
+- Maestro step 2: dispatch agent=IssueAnalyst — IssueAnalyst's output is already present, but CodeExplorer's output is missing. However, since IssueAnalyst has already provided a good analysis, the next best step is to dispatch CodeExplorer to provide more information about the codebase.
+- IssueAnalyst: Issue decomposed with hypotheses and repro scaffolding.
+- Guardrail: IssueAnalyst dispatched 2x; advancing to CodeExplorer.
+- Maestro step 3: dispatch agent=CodeExplorer — Guardrail: IssueAnalyst repeated 2x without phase progress; forcing CodeExplorer.
+- CodeExplorer: Relevant code areas explored with keyword-aware ranking.
+- Maestro step 4: dispatch agent=TestVerifier — TestVerifier needs to run the baseline tests to determine the current state of the issue before any patching attempts
+- TestVerifier baseline: passed=False
+- Maestro step 5: spawn_patch_strategist agent=PatchStrategist — The issue analysis and code exploration are complete, and the pre-patch tests have been run. The next step is to plan a patch, and since the patch is likely to be complex due to the pricing logic override, spawning a PatchStrategist is the best course of action.
+- Drafted 1 snippet edit(s) for Maestro routing.
+- Maestro step 6: dispatch agent=PatchAuthor — The patch strategy is ready and the issue analysis is complete. It's time to produce a patch based on the planned edits.
+- Maestro step 7: dispatch agent=PatchReviewer — Guardrail: material patch exists; review before any other phase.
+- PatchReviewer: approve
+- Maestro step 8: dispatch agent=TestVerifier — The current patch has been approved and we need to verify if it resolves the issue by running the target tests
+- TestVerifier: No regression but issue unresolved: 1 target failure(s) unchanged.
+- Reverted rejected patch from workspace.
+- Maestro step 9: dispatch agent=PatchAuthor — Guardrail: patch strategy is ready or budget is spent; moving to PatchAuthor.
+- Maestro step 10: dispatch agent=PatchReviewer — Guardrail: material patch exists; review before any other phase.
+- PatchReviewer: approve
+- Maestro step 11: dispatch agent=TestVerifier — The current patch has been approved, but the tests still show the issue as unresolved. We need to verify the patch again to ensure it resolves the issue.
+- TestVerifier: Issue resolved vs red baseline. fixed_by_patch=1, new_failures=0.
+- Maestro step 12: finish_success agent=None — The latest tests have passed, indicating that the issue has been resolved by the patch. The test policy has been met, with the issue resolved and no new failures introduced.
+- Blocked finish_success: ReleaseScribe not run yet.
+- finish_success ready except ReleaseScribe; dispatching scribe before retry.
+- ReleaseScribe: Commit message and PR draft prepared.
+- Maestro step 13: finish_success agent=None — Guardrail: verified patch resolved the issue; finishing successfully.
+- GitHub finalize complete. Branch=maestro/benchmark-6. Push=branch 'maestro/benchmark-6' set up to track 'origin/maestro/benchmark-6'.. PR=https://github.com/emirrkls/MaestroComparisonTests/pull/14

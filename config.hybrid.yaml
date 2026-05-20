@@ -1,0 +1,65 @@
+# GitMaestro Hybrid profile (Local Ollama + NVIDIA Build API)
+# Usage:
+#   python -m maestro run --repo owner/name --issue 1 --config config.hybrid.yaml
+#
+# Model routing in hybrid mode is prefix-based:
+# - local/<model-tag>   -> Ollama provider
+# - nvidia/<model-id>   -> NVIDIA Build API provider
+#
+# Required env for NVIDIA:
+#   NVIDIA_API_KEY=...
+#   # or NVCF_API_KEY=...
+
+models:
+  # Lightweight local orchestration path to keep cloud RPM under control.
+  default: "local/qwen2.5-coder:14b"
+  # Local fallback profile for unattended runs when NVIDIA rate limits are exhausted.
+  critic: "local/qwen2.5-coder:14b"
+  ad_hoc_overrides:
+    # Use local orchestration/coding to avoid NVIDIA 429s during unattended loops.
+    Maestro: "local/qwen2.5-coder:7b"
+    PatchAuthor: "local/qwen2.5-coder:14b"
+    PatchStrategist: "local/qwen2.5-coder:14b"
+
+runtime:
+  mock_llm: false
+  allow_commit: true
+  allow_push: true
+  max_retries: 10
+  ad_hoc_budget: 1
+  test_timeout_seconds: 240
+  test_command_allowlist: ["python -m unittest", "pytest", "python -m pytest"]
+  github_enabled: true
+  allow_pr_draft: true
+  branch_prefix: "maestro/issue"
+
+  llm_backend: "hybrid"
+  ollama_base_url: "http://127.0.0.1:11434/v1"
+  ollama_timeout_seconds: 720
+  ollama_think: false
+  ollama_max_tokens: 8192
+
+  nvidia_base_url: "https://integrate.api.nvidia.com/v1"
+  nvidia_timeout_seconds: 180
+  nvidia_max_tokens: 4096
+  # Client-side guardrail to avoid API-side throttling.
+  nvidia_rpm_limit: 20
+  # Optional per-model limits (exact model id after "nvidia/" prefix).
+  # If a model is listed here, this value overrides nvidia_rpm_limit for that model only.
+  nvidia_rpm_overrides:
+    "meta/llama-3.3-70b-instruct": 12
+
+  test_baseline_before_patch: true
+  test_repair_max_retries: 2
+  maestro_max_conductor_steps: 48
+  patch_strategy_rewrite_enabled: true
+  require_fix_on_red_baseline: true
+  # Already-resolved akışı: false -> sadece issue_feedback.md, true -> issue'ya yorum atar.
+  post_issue_feedback_comments: false
+  critic_final_retry_min_confidence: 0.92
+  agentic_fatigue_escalation_enabled: true
+  agentic_fatigue_min_rejects: 3
+  agentic_fatigue_compromise_max_confidence: 0.78
+  agentic_fatigue_confidence_drop_min: 0.18
+  agentic_fatigue_require_both_signals: true
+  agentic_fatigue_require_explicit_confidence: true

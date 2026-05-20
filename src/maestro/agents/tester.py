@@ -5,8 +5,8 @@ from maestro.providers.llm.base import LLMProvider
 from maestro.providers.test_runner import TestRunner
 
 
-class TesterAgent(BaseAgent):
-    name = "Tester"
+class TestVerifierAgent(BaseAgent):
+    name = "TestVerifier"
 
     def __init__(self, llm: LLMProvider, model: str, test_runner: TestRunner) -> None:
         super().__init__(llm=llm, model=model)
@@ -63,3 +63,6 @@ class TesterAgent(BaseAgent):
             },
             confidence=0.85 if chosen_result["passed"] else 0.55,
         )
+
+
+TesterAgent = TestVerifierAgent

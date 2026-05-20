@@ -27,6 +27,19 @@ runtime:
   ollama_timeout_seconds: 600
   test_baseline_before_patch: true
   test_repair_max_retries: 2
+  maestro_max_conductor_steps: 48
+  require_fix_on_red_baseline: true
+  # When true, GitMaestro POSTs already-resolved/feedback reports as a comment
+  # on the GitHub issue (idempotent via a hidden run-id marker). When false,
+  # the report is only emitted as runs/<task_id>/issue_feedback.md.
+  post_issue_feedback_comments: false
+  critic_final_retry_min_confidence: 0.92
+  agentic_fatigue_escalation_enabled: true
+  agentic_fatigue_min_rejects: 3
+  agentic_fatigue_compromise_max_confidence: 0.78
+  agentic_fatigue_confidence_drop_min: 0.18
+  agentic_fatigue_require_both_signals: true
+  agentic_fatigue_require_explicit_confidence: true
   patch_strategy_snippet_enabled: true
   patch_strategy_hunk_enabled: true
   patch_strategy_rewrite_enabled: false

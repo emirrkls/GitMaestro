@@ -23,8 +23,9 @@ models:
   default: "qwen2.5-coder:7b"
   critic: "qwen2.5-coder:14b"
   ad_hoc_overrides:
-    Surgeon: "qwen2.5-coder:14b"
-    PatchPlanner: "qwen2.5-coder:14b"
+    PatchAuthor: "qwen2.5-coder:14b"
+    PatchReviewer: "qwen2.5-coder:14b"
+    PatchStrategist: "qwen2.5-coder:14b"
 
 runtime:
   mock_llm: false
@@ -47,3 +48,15 @@ runtime:
   ollama_max_tokens: 8192
   test_baseline_before_patch: true
   test_repair_max_retries: 2
+  maestro_max_conductor_steps: 48
+  require_fix_on_red_baseline: true
+  # Issue #9 senaryosu: target test baseline'da zaten yeşilse patch denemeden
+  # feedback raporu üret. true yaparsan GitHub issue'suna idempotent yorum atar.
+  post_issue_feedback_comments: true
+  critic_final_retry_min_confidence: 0.92
+  agentic_fatigue_escalation_enabled: true
+  agentic_fatigue_min_rejects: 3
+  agentic_fatigue_compromise_max_confidence: 0.78
+  agentic_fatigue_confidence_drop_min: 0.18
+  agentic_fatigue_require_both_signals: true
+  agentic_fatigue_require_explicit_confidence: true

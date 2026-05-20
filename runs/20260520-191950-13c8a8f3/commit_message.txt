@@ -1,0 +1,1 @@
+fix(bundles): correct checkout price for configured product bundles

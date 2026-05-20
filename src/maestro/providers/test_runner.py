@@ -41,7 +41,47 @@ class TestRunner:
             return {"passed": False, "exit_code": 127, "stdout": "", "stderr": f"Command not found: {command}"}
 
     def issue_scoped_commands(self, context: dict[str, object]) -> list[str]:
-        """Prefer unittest commands targeting test files related to scout candidates or issue text."""
+        """Build test commands scoped to the issue.
+
+        Preference order:
+        1. Scout-supplied ``target_test_dotted`` ids → one exact ``unittest <dotted...>`` invocation.
+        2. Legacy fallback: derive test files from Scout's ``candidate_files`` + issue tokens.
+
+        The dotted form lets Maestro run only the test(s) the issue actually targets, so
+        unrelated red tests stay out of the baseline-vs-post comparison.
+        """
+        targeted = self._target_dotted_commands(context)
+        if targeted:
+            return targeted
+        return self._legacy_file_scoped_commands(context)
+
+    def _target_dotted_commands(self, context: dict[str, object]) -> list[str]:
+        scout = context.get("scout")
+        if not isinstance(scout, dict):
+            return []
+        raw_targets = scout.get("target_test_dotted")
+        if not isinstance(raw_targets, list):
+            return []
+        seen: set[str] = set()
+        dotted_ids: list[str] = []
+        for entry in raw_targets:
+            dotted = str(entry).strip()
+            if not dotted or any(ch.isspace() for ch in dotted):
+                continue
+            if dotted in seen:
+                continue
+            seen.add(dotted)
+            dotted_ids.append(dotted)
+            if len(dotted_ids) >= 8:
+                break
+        if not dotted_ids:
+            return []
+        # unittest accepts multiple test ids in one command. Keeping target tests
+        # together prevents TestVerifier's first-failure selection from shrinking
+        # the baseline to a single test.
+        return ["python -m unittest " + " ".join(dotted_ids)]
+
+    def _legacy_file_scoped_commands(self, context: dict[str, object]) -> list[str]:
         scout = context.get("scout")
         candidates: list[str] = []
         if isinstance(scout, dict):

@@ -1,0 +1,74 @@
+{
+  "score_id": "730bf04f-9b53-44f4-a53d-93d9961cbc67",
+  "complexity": "low",
+  "movements": [
+    {
+      "agent": "Maestro",
+      "task": "Conductor routes specialists dynamically",
+      "depends_on": [],
+      "timeout": 120,
+      "on_reject": null
+    },
+    {
+      "agent": "IssueAnalyst",
+      "task": "Issue decomposition and repro",
+      "depends_on": [],
+      "timeout": 120,
+      "on_reject": null
+    },
+    {
+      "agent": "CodeExplorer",
+      "task": "Code area discovery",
+      "depends_on": [
+        "IssueAnalyst"
+      ],
+      "timeout": 120,
+      "on_reject": null
+    },
+    {
+      "agent": "PatchAuthor",
+      "task": "Minimal patch",
+      "depends_on": [
+        "CodeExplorer"
+      ],
+      "timeout": 120,
+      "on_reject": null
+    },
+    {
+      "agent": "PatchReviewer",
+      "task": "Independent patch review",
+      "depends_on": [
+        "PatchAuthor"
+      ],
+      "timeout": 120,
+      "on_reject": {
+        "target": "PatchAuthor",
+        "max_retry": 10
+      }
+    },
+    {
+      "agent": "TestVerifier",
+      "task": "Run tests",
+      "depends_on": [
+        "PatchReviewer"
+      ],
+      "timeout": 120,
+      "on_reject": null
+    },
+    {
+      "agent": "ReleaseScribe",
+      "task": "Draft commit and PR",
+      "depends_on": [
+        "TestVerifier"
+      ],
+      "timeout": 120,
+      "on_reject": null
+    }
+  ],
+  "escalation_policy": {
+    "max_retry": 10,
+    "on_retry_exhausted": "human_escalation"
+  },
+  "ad_hoc_allowed": true,
+  "ad_hoc_budget": 1
+}
